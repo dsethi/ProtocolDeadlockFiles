@@ -1975,161 +1975,75 @@ invariant "Lemma_5"
     Sta.Proc[p].CacheState = CACHE_E -> Sta.Proc[p].CacheData = Sta.CurrData
   end;
 
-/* Correct Set of Invariants Commented on Sep 11, 2013 -- proof holds for these only
-invariant "Progress_no_forwarding"
-forall src: NODE do
-  forall dst: NODE do
-   ((isundefined(Sta.PendReqSrc))&(isundefined(Sta.UniMsg[src].Proc)))->progress(src,dst)
-  end
-end;
-
-invariant "Progress_Interactions_Forwarding"
-forall src: NODE do
-  forall dst: NODE do
-    (!isundefined(Sta.UniMsg[src].Proc) & (dst=Sta.UniMsg[src].Proc))->(progress(src,dst))
-  end
-end;
-
-invariant "Progress_Interactions_Pending"
-forall src: NODE do
-  forall dst: NODE do
-    ((!isundefined(Sta.PendReqSrc)) & (src=Sta.PendReqSrc) & (isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) & (!Sta.Collecting) )->(progress(src, dst))
-  end
-end;
-
-invariant "Progress_Interactions_Pending"
-forall src: NODE do
-  forall dst: NODE do
-    ((!isundefined(Sta.PendReqSrc))  & (src=Sta.PendReqSrc) & (!isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) & (dst=Sta.UniMsg[Sta.PendReqSrc].Proc) & (!Sta.Collecting) )->(progress(src, dst))
-  end
-end;
-
-invariant "sanity"
-((!isundefined(Sta.PendReqSrc))&(Sta.Collecting)&(isundefined(Sta.LastOtherInvAck))) -> false;
-
-invariant "Progress_Invalidate"
-forall src: NODE do
-  ((!isundefined(Sta.PendReqSrc))&(Sta.Collecting)& (!isundefined(Sta.LastOtherInvAck)) & (src=Sta.LastOtherInvAck)) -> progress_invalidate(src)
-end;
-*/
-
-/* COmmented at 218 am.
-invariant "Progress_initial"
-forall src: NODE do
-  forall dst: NODE do
-    (isundefined(Sta.PendReqSrc))->progress(src,dst)
-  end
-end;
-
-invariant "Progress_Interactions_Pending_No_Forwarding"
-forall src: NODE do
-  forall dst: NODE do
-  ((!isundefined(Sta.PendReqSrc)) & (Sta.PendReqSrc = src) & (isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) & (!Sta.Collecting))->(progress(Sta.PendReqSrc, dst))
-   end
-end;
-
-invariant "Progress_Interactions_Pending_Forwarding"
-forall src: NODE do
-  forall dst: NODE do
-    ((!isundefined(Sta.PendReqSrc)) & (Sta.PendReqSrc = src) & (!isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) & (!Sta.Collecting) & (Sta.UniMsg[Sta.PendReqSrc].Proc = dst))->(progress(src, dst))
-   end
-end;
-
-invariant "Progress_Invalidate"
-forall src:NODE do
- ((!isundefined(Sta.PendReqSrc))&(Sta.Collecting)& (!isundefined(Sta.LastOtherInvAck)) & (Sta.LastOtherInvAck = src)) -> progress_invalidate(src)
-end;
-
-invariant "sanity"
-((!isundefined(Sta.PendReqSrc))&(Sta.Collecting)&(isundefined(Sta.LastOtherInvAck))) -> false;
-*/
-
+----------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
 
 /*
---Step 1:
+invariant "Progress1_it01" 
+forall src: NODE do
+    progress1(src) 
+end;
 
-invariant "Progress_initial" Failed since cant happen for all src when pendreqsrc valid.
+Fails as home node cant progress since pending is true
+*/
+-----------------------------------------------
+
+invariant "Progress1_it11" 
 forall src: NODE do
   forall dst: NODE do
-    true->progress(src,dst)
+    !Sta.Dir.Pending -> progress(src,dst) 
   end
 end;
-*/
 
 /*
---Step 2
 
-invariant "Progress_noPending"
+-- Fails since home does a put, so is pending but invalidate is to be completed.
+
+invariant "Progress1_it12" 
 forall src: NODE do
-  forall dst: NODE do
-    (isundefined(Sta.PendReqSrc))->progress(src,dst)
-  end
+    Sta.Dir.Pending -> progress(Sta.PendReqSrc) 
 end;
 
-
-failed since does not work if proccmd valid
-
-invariant "Progress_Pending"
+invariant "SetNotNullAssertion" 
 forall src: NODE do
-  forall dst: NODE do
-    (!isundefined(Sta.PendReqSrc)) & (src = Sta.PendReqSrc)->progress(src,dst)
-  end
+ Sta.Dir.Pending -> !isUndefined(Sta.PendReqSrc)
 end;
+
 */
+-------------------------------------------------
 
-/* Step 3
-invariant "Progress_noPending"
+--Single index invariant re-written with second index dst. This is because the request should be forwarded to Sta.UniMsg[src].Proc, which should be a concrete agent for the
+--invariant to be well-defined.
+invariant "Progress1_it21" 
 forall src: NODE do
   forall dst: NODE do
-    (isundefined(Sta.PendReqSrc))->progress(src,dst)
+    Sta.Dir.Pending & isUndefined(Sta.LastOtherInvAck) -> (((src = Sta.PendReqSrc)&((Sta.UniMsg[src].Proc = dst)|isUnDefined(Sta.UniMsg[src].Proc)))-> progress(src,dst))
   end
 end;
 
--- Failed since collecting true (invalidate)
-invariant "Progress_Pending_unknownForwardingDst"
+--& (Sta.UniMsg[src].Proc != Other)
+invariant "Progress1_it22" 
 forall src: NODE do
   forall dst: NODE do
-    (!isundefined(Sta.PendReqSrc)) & (src = Sta.PendReqSrc)  & (isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) -> progress(src,dst)
-  end
-end;
-
-
-invariant "Progress_Pending_knownForwardingDst"
-forall src: NODE do
-  forall dst: NODE do
-    (!isundefined(Sta.PendReqSrc)) & (src = Sta.PendReqSrc)  & (!isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc) & (dst = Sta.UniMsg[Sta.PendReqSrc].Proc)) ->progress(src,dst)
-  end
-end;
-*/
-
-invariant "Progress_noPending"
-forall src: NODE do
-  forall dst: NODE do
-    (isundefined(Sta.PendReqSrc))->progress(src,dst)
-  end
-end;
-
-invariant "Progress_Pending_unknownForwardingDstNoInv"
-forall src: NODE do
-  forall dst: NODE do
-    (!isundefined(Sta.PendReqSrc)) & (src = Sta.PendReqSrc)  & (isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) & isundefined(Sta.LastOtherInvAck)
--> progress(src,dst)
+    Sta.Dir.Pending & !isUndefined(Sta.LastOtherInvAck) -> (((src = Sta.LastOtherInvAck)&((Sta.UniMsg[src].Proc = dst)|isUnDefined(Sta.UniMsg[src].Proc)))-> progress(src,dst))
   end
 end;
 
 
-invariant "Progress_Pending_unknownForwardingDstInv"
+invariant "SetNotNullAssertion" 
 forall src: NODE do
-  forall dst: NODE do
-    (!isundefined(Sta.PendReqSrc)) & !isundefined(Sta.LastOtherInvAck) & (src = Sta.LastOtherInvAck)  & (isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc)) 
--> progress(src,dst)
-  end
+ Sta.Dir.Pending  & isUndefined(Sta.LastOtherInvAck) -> !isUndefined(Sta.PendReqSrc)
 end;
 
 
-invariant "Progress_Pending_knownForwardingDst"
+invariant "SetNotNullAssertion" 
 forall src: NODE do
-  forall dst: NODE do
-    (!isundefined(Sta.PendReqSrc)) & (src = Sta.PendReqSrc)  & (!isundefined(Sta.UniMsg[Sta.PendReqSrc].Proc) & (dst = Sta.UniMsg[Sta.PendReqSrc].Proc)) ->progress(src,dst)
-  end
+ Sta.Dir.Pending  & !isUndefined(Sta.LastOtherInvAck) -> !isUndefined(Sta.LastOtherInvAck)
 end;
+
+
+--| End of model
+
+
+
+

@@ -177,7 +177,7 @@ ruleset d : DATA do startstate "Init"
     ReqSActive[i] := false;
   end;
   ExGntd := false; CurCmd := Empty; MemData := d; AuxData := d;
-  env_o := true;
+  env_o := false;
   CountInvShr := 0;
 end end;
 
@@ -417,68 +417,29 @@ forall i:NODE do
   end
 end;
 
---|((ShrSet[j]=true)->canReqProgress(j))))
-/*
-invariant "ProgressOfReq"
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+invariant "Inv1"
 forall i : NODE do  
-    (((CurPtr=i)&(forall j: NODE do ShrSet[j]=false end)) -> (canReqSProgress(i)|canReqEProgress(i)))
+  (CurCmd=Empty) -> (canReqProgress(i))
 end;
 
-
-invariant "Interactions"
-forall i:NODE do
-  forall j: NODE do
-    ((((CurPtr = j)&(i!=j))->conflictingReqProgresses(j))|
-     ((ShrSet[j] = true)->conflictingReqProgresses(j)))
-  end
-end;
-*/
-
-/*
-invariant "ProgressOfReq"
+invariant "Inv2"
 forall i : NODE do  
-  (((CurPtr=i)&(forall j: NODE do ShrSet[j]=false end)) -> (canReqProgress(i)))
+  (((!(CurCmd=Empty))&(!(((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)))) -> ((CurPtr=i) -> (canReqProgress(i))))
 end;
 
-
-invariant "Interactions"
-forall i:NODE do
-  forall j: NODE do
-    ((((CurPtr = j)&(i!=j))->canReqProgress(j))|
-     ((ShrSet[j] = true)->canReqProgress(j)))
-  end
-end;
-*/
-
-
-/*invariant "ProgressOfReq"
+invariant "NullCheckInv2"
 forall i : NODE do  
-  (((CurPtr=i)&(forall j: NODE do ShrSet[j]=false end)) -> (canReqProgress(i)))
+  (((!(CurCmd=Empty))&(!(((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)))) -> !isUndefined(CurPtr))
 end;
 
-invariant "Interactions"
+invariant "Inv3"
 forall i:NODE do
-  forall j: NODE do
-    ((((CurPtr = j)&(i!=j))|(ShrSet[j] = true))->canReqProgress(j))
-  end
+  ((!(CurCmd=Empty)) & (((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)) -> ((AuxLastSharer=i) -> canReqProgress(i)))
 end;
-*/
 
-/*Trying to show that a reqS or reqE from cache i can progress at all times and if it can not, there exists, for sure, some other request which can progress*/
-
-/*
-invariant "ProgressOfReqUnref"
-forall i : NODE do 
-  isReqSActive(i) -> (canReqSProgress(i)|canReqEProgress(i))
+invariant "NullCheckInv3"
+forall i:NODE do
+  ((!(CurCmd=Empty)) & (((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)) -> !isUndefined(AuxLastSharer))
 end;
-*/
-
-/*
-invariant "ProgressOfReq"
-(forall j: NODE do ShrSet[j]=false end) -> (canReqSProgress(CurPtr)|canReqEProgress(CurPtr));
-
-invariant "Interactions"
-  forall j: NODE do
-   ((ShrSet[j] = true)->conflictingReqProgresses(j))
-     end;
-*/

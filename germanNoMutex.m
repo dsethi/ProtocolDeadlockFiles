@@ -421,40 +421,34 @@ begin
 end;
 end;
 
-invariant "CntrlProp"
-  forall i : NODE do
-    forall j : NODE do
-      i != j ->
-        (Cache[i].State = E -> Cache[j].State = I)
-        & (Cache[i].State = S -> Cache[j].State = I | Cache[j].State = S)
-    end
-  end;
-invariant "DataProp"
-  (ExGntd = false -> MemData = AuxData)
-  & forall i : NODE do Cache[i].State != I -> Cache[i].Data = AuxData end;
 
-
-invariant "ProgressOfReqInit"
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+invariant "Inv1"
 forall i : NODE do  
-  ((isUndefined(CurPtr)) -> (canReqProgress(i)))
+  (CurCmd=Empty) -> (canReqProgress(i))
 end;
 
 
-invariant "ProgressOfActiveReq"
+invariant "Inv2"
 forall i : NODE do  
-  (((!isUndefined(CurPtr))&(CurPtr=i)&(!((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd)))) -> (canReqProgress(i)))
+  (((!(CurCmd=Empty))&(!(((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)))) -> ((CurPtr=i) -> (canReqProgress(i))))
 end;
 
-invariant "ProgressofActiveReq2"
-forall i:NODE do
-  ( (!isUndefined(CurPtr)) & (CurPtr=i) & ((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd)) & isUndefined(AuxLastSharer) ) -> canReqProgress(i)
+invariant "NullCheckInv2"
+forall i : NODE do  
+  (((!(CurCmd=Empty))&(!(((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)))) -> !isUndefined(CurPtr))
 end;
 
-invariant "Interactions"
+invariant "Inv3"
 forall i:NODE do
-  forall j:NODE do
-    ( (!isUndefined(CurPtr)) & (CurPtr=i) & ((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd)) & (AuxLastSharer=j) ) -> canReqProgress(j)
-  end
+  ((!(CurCmd=Empty)) & (((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)) -> ((AuxLastSharer=i) -> canReqProgress(i)))
 end;
+
+invariant "NullCheckInv3"
+forall i:NODE do
+  ((!(CurCmd=Empty)) & (((CurCmd=ReqE)|((CurCmd=ReqS)&ExGntd))&!isUndefined(AuxLastSharer)) -> !isUndefined(AuxLastSharer))
+end;
+
 
 --| End of model
